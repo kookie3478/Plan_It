@@ -8,7 +8,7 @@ class TextFieldComponent extends StatelessWidget {
     required this.controller,
     required this.height,
     this.keyboardType = TextInputType.text,
-    this.mx= 0,
+    this.mx= 1, this.width=100,
   });
 
   final String hint;
@@ -16,12 +16,14 @@ class TextFieldComponent extends StatelessWidget {
   final TextInputType keyboardType;
   final int mx;
   final double height;
+  final double width;
 
 
   @override
   Widget build(BuildContext context) {
     return Container(
       height: height,
+      width: width,
       //color:Colors.green,
       child: TextField(
         controller: controller,

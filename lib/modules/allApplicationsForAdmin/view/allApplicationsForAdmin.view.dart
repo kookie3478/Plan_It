@@ -10,7 +10,7 @@ class AllApplicationsForAdminView extends StatefulWidget {
 class _AllApplicationsForAdminViewState extends State<AllApplicationsForAdminView> {
   List<Map<String, dynamic>> applications = [];
 
-  AllApplicationsForAdminController allApplicationsForAdminController=AllApplicationsForAdminController();
+  //AllApplicationsForAdminController allApplicationsForAdminController=AllApplicationsForAdminController();
 
   @override
   void initState() {
@@ -21,7 +21,7 @@ class _AllApplicationsForAdminViewState extends State<AllApplicationsForAdminVie
   // Fetch applications from Firestore and store them in a local list
   Future<void> fetchApplications() async {
     try {
-      final querySnapshot = await FirebaseFirestore.instance.collection('applications').get();
+      final querySnapshot = await FirebaseFirestore.instance.collection('applications').where('status', isEqualTo: 'pending').get();
       setState(() {
         applications = querySnapshot.docs.map((doc) {
           final data = doc.data() as Map<String, dynamic>;
@@ -35,12 +35,24 @@ class _AllApplicationsForAdminViewState extends State<AllApplicationsForAdminVie
   }
 
   // Handle application status and remove it from the list
-  void handleApplication(String id, String status) {
-    setState(() {
-      applications.removeWhere((app) => app['id'] == id);
-    });
-    print('Application $id marked as $status.');
+  Future<void> handleApplication(String id, String status) async {
+    try {
+      // Update the status in Firestore
+      await FirebaseFirestore.instance.collection('applications').doc(id).update({
+        'status': status,  // Update the status field
+      });
+
+      // Remove the application from the local list
+      setState(() {
+        applications.removeWhere((app) => app['id'] == id);
+      });
+
+      print('Application $id marked as $status.');
+    } catch (e) {
+      print('Error updating application status: $e');
+    }
   }
+
 
 
   void showConfirmationDialog(BuildContext context, String id, String status) {

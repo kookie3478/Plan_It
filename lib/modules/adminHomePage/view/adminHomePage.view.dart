@@ -3,15 +3,30 @@ import 'package:get/get.dart';
 import 'package:plan_it/modules/adminHomePage/controllers/adminHomePage.controller.dart';
 
 class AdminHomePageView extends StatelessWidget {
-   AdminHomePageView({super.key});
-
-  AdminHomePageController adminHomePageController= AdminHomePageController();
+  AdminHomePageView({super.key});
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  AdminHomePageController adminHomePageController = AdminHomePageController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        key: _scaffoldKey,
         appBar: AppBar(
-          leading: IconButton(onPressed: (){}, icon: Icon(Icons.menu_rounded)), // Don't forget to add a function to open the drawer component here
+          leading: IconButton(
+            icon: const Icon(Icons.menu),
+            style: ButtonStyle(
+              foregroundColor: WidgetStateProperty.all<Color>(
+                context.theme.colorScheme.onPrimaryContainer,
+              ),
+              backgroundColor: WidgetStateProperty.all<Color>(
+                context.theme.colorScheme.surface,
+              ),
+            ),
+            onPressed: () {
+              _scaffoldKey.currentState?.openDrawer();
+            },
+          ),
+          // Don't forget to add a function to open the drawer component here
           centerTitle: true,
           title: const Text(
             "Home",
@@ -34,11 +49,82 @@ class AdminHomePageView extends StatelessWidget {
                 )),
           ],
         ),
+        drawer: Drawer(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ListView(
+              children: [
+                DrawerHeader(
+                  child: Text(
+                    'More',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 30,
+                        color: Colors.cyan),
+                  ),
+                ),
+                MaterialButton(
+                  onPressed: () {},
+                  minWidth: 0,
+                  padding: EdgeInsets.zero,
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  visualDensity: VisualDensity.compact,
+                  child: Row(
+                    children: [
+                      Icon(Icons.person),
+                      SizedBox(width: 10,),
+                      Text(
+                        "User Profile",
+                        style: TextStyle(fontWeight: FontWeight.w400, fontSize: 20),
+                      ),
+                    ],
+                  )
+                ),
+                MaterialButton(
+                    onPressed: () {},
+                    minWidth: 0,
+                    padding: EdgeInsets.zero,
+                    splashColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
+                    visualDensity: VisualDensity.compact,
+                    child: Row(
+                      children: [
+                        Icon(Icons.settings),
+                        SizedBox(width: 10,),
+                        Text(
+                          "Settings Page",
+                          style: TextStyle(fontWeight: FontWeight.w400, fontSize: 20),
+                        ),
+                      ],
+                    )
+                ),
+                MaterialButton(
+                    onPressed: () {},
+                    minWidth: 0,
+                    padding: EdgeInsets.zero,
+                    splashColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
+                    visualDensity: VisualDensity.compact,
+                    child: Row(
+                      children: [
+                        Icon(Icons.color_lens),
+                        SizedBox(width: 10,),
+                        Text(
+                          "Theme",
+                          style: TextStyle(fontWeight: FontWeight.w400, fontSize: 20),
+                        ),
+                      ],
+                    )
+                ),
+              ],
+            ),
+          ),
+        ),
         body: Padding(
           padding: const EdgeInsets.all(8.0),
           child: ListView(
             children: [
-
               // Here you have the notification button where you need to add the notifications received by the user so that everyone gets the update for the holiday of dept
 
               Text(
@@ -102,12 +188,16 @@ class AdminHomePageView extends StatelessWidget {
                             Text(
                               "Today's Shift",
                               style: TextStyle(
-                                  fontWeight: FontWeight.w500, fontSize: 16, color: context.theme.colorScheme.onPrimary),
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 16,
+                                  color: context.theme.colorScheme.onPrimary),
                             ),
                             Text(
                               "Morning",
                               style: TextStyle(
-                                  fontSize: 13, fontWeight: FontWeight.w300, color: context.theme.colorScheme.onPrimary),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w300,
+                                  color: context.theme.colorScheme.onPrimary),
                             ),
                           ],
                         ),
@@ -116,12 +206,14 @@ class AdminHomePageView extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 20,),
+              const SizedBox(
+                height: 20,
+              ),
 
               // material button for opening up the shift calendar
 
               MaterialButton(
-                onPressed: ()=> adminHomePageController.openCalendar(),
+                onPressed: () => adminHomePageController.openCalendar(),
                 visualDensity: VisualDensity.compact,
                 splashColor: Colors.transparent,
                 highlightColor: Colors.transparent,
@@ -137,19 +229,29 @@ class AdminHomePageView extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("Open Shift Calendar", style: TextStyle(fontWeight: FontWeight.w400, fontSize: 20, color: context.theme.colorScheme.onPrimary),),
-                      Icon(Icons.open_in_full_rounded, color: context.theme.colorScheme.outline,),
-
+                      Text(
+                        "Open Shift Calendar",
+                        style: TextStyle(
+                            fontWeight: FontWeight.w400,
+                            fontSize: 20,
+                            color: context.theme.colorScheme.onPrimary),
+                      ),
+                      Icon(
+                        Icons.open_in_full_rounded,
+                        color: context.theme.colorScheme.outline,
+                      ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 20,),
+              const SizedBox(
+                height: 20,
+              ),
               // material button for making a new application for a user, this application is sent to the admin
               // Also make sure that the in the home screen of the admin this material button is replaced by new requests material button which will lead him/her to the page where the
 
               MaterialButton(
-                onPressed: ()=>adminHomePageController.showApplications(),
+                onPressed: () => adminHomePageController.showApplications(),
                 visualDensity: VisualDensity.compact,
                 splashColor: Colors.transparent,
                 highlightColor: Colors.transparent,
@@ -165,8 +267,18 @@ class AdminHomePageView extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("Show All Applications", style: TextStyle(fontWeight: FontWeight.w400, fontSize: 20, color: context.theme.colorScheme.onPrimary),),
-                      Icon(Icons.add, color: context.theme.colorScheme.outline,size: 30,),
+                      Text(
+                        "Show All Applications",
+                        style: TextStyle(
+                            fontWeight: FontWeight.w400,
+                            fontSize: 20,
+                            color: context.theme.colorScheme.onPrimary),
+                      ),
+                      Icon(
+                        Icons.add,
+                        color: context.theme.colorScheme.outline,
+                        size: 30,
+                      ),
                     ],
                   ),
                 ),

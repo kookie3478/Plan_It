@@ -1,17 +1,31 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:plan_it/modules/home/controller/home.controller.dart';
 
 class HomeView extends StatelessWidget {
   HomeView({super.key});
-
+  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
   final HomeController homeController = HomeController();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        key: scaffoldKey,
         appBar: AppBar(
-          leading: IconButton(onPressed: (){}, icon: Icon(Icons.menu_rounded)), // Don't forget to add a function to open the drawer component here
+          leading: IconButton(
+            icon: const Icon(Icons.menu),
+            style: ButtonStyle(
+              foregroundColor: WidgetStateProperty.all<Color>(
+                context.theme.colorScheme.onPrimaryContainer,
+              ),
+              backgroundColor: WidgetStateProperty.all<Color>(
+                context.theme.colorScheme.surface,
+              ),
+            ),
+            onPressed: () {
+              scaffoldKey.currentState?.openDrawer();
+            },
+          ), // Don't forget to add a function to open the drawer component here
           centerTitle: true,
           title: const Text(
             "Home",
@@ -33,6 +47,78 @@ class HomeView extends StatelessWidget {
                   color: Colors.blueGrey,
                 )),
           ],
+        ),
+        drawer: Drawer(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ListView(
+              children: [
+                DrawerHeader(
+                  child: Text(
+                    'More',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 30,
+                        color: Colors.cyan),
+                  ),
+                ),
+                MaterialButton(
+                    onPressed: () {},
+                    minWidth: 0,
+                    padding: EdgeInsets.zero,
+                    splashColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
+                    visualDensity: VisualDensity.compact,
+                    child: Row(
+                      children: [
+                        Icon(Icons.person),
+                        SizedBox(width: 10,),
+                        Text(
+                          "User Profile",
+                          style: TextStyle(fontWeight: FontWeight.w400, fontSize: 20),
+                        ),
+                      ],
+                    )
+                ),
+                MaterialButton(
+                    onPressed: () {},
+                    minWidth: 0,
+                    padding: EdgeInsets.zero,
+                    splashColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
+                    visualDensity: VisualDensity.compact,
+                    child: Row(
+                      children: [
+                        Icon(Icons.settings),
+                        SizedBox(width: 10,),
+                        Text(
+                          "Settings Page",
+                          style: TextStyle(fontWeight: FontWeight.w400, fontSize: 20),
+                        ),
+                      ],
+                    )
+                ),
+                MaterialButton(
+                    onPressed: () {},
+                    minWidth: 0,
+                    padding: EdgeInsets.zero,
+                    splashColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
+                    visualDensity: VisualDensity.compact,
+                    child: Row(
+                      children: [
+                        Icon(Icons.color_lens),
+                        SizedBox(width: 10,),
+                        Text(
+                          "Theme",
+                          style: TextStyle(fontWeight: FontWeight.w400, fontSize: 20),
+                        ),
+                      ],
+                    )
+                ),
+              ],
+            ),
+          ),
         ),
         body: Padding(
           padding: const EdgeInsets.all(8.0),

@@ -1,31 +1,33 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
-import 'package:plan_it/modules/applications/view/applications.view.dart';
-import 'package:plan_it/modules/calendar/view/calendar.view.dart';
-import 'package:plan_it/modules/home/view/home.view.dart';
-import 'package:plan_it/modules/login/view/login.view.dart';
-import 'package:plan_it/modules/signUp/view/signUp.view.dart';
-import 'package:plan_it/modules/wrapper/view/wrapper.view.dart';
 import 'package:plan_it/utils/const.utils.dart';
 import 'package:plan_it/utils/theme.util.dart';
 
 import 'helper/sharedPreferences.helper.dart';
 import 'modules/settingsPage/view/settingsPage.view.dart';
+import 'modules/wrapper/controller/wrapper.controller.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if(kIsWeb){
-    await Firebase.initializeApp(options: const FirebaseOptions(apiKey: "AIzaSyCrXaIEpuqHRCMdjdIT9EJ-f8zwc2UDnqc",
-        authDomain: "planit-9e935.firebaseapp.com",
-        projectId: "planit-9e935",
-        storageBucket: "planit-9e935.firebasestorage.app",
-        messagingSenderId: "128505375577",
-        appId: "1:128505375577:web:5a2a247d3d9d33ad1dba48"));
+    await Firebase.initializeApp(
+      options: FirebaseOptions(
+        apiKey: dotenv.env['FIREBASE_API_KEY']!,
+        authDomain: dotenv.env['FIREBASE_AUTH_DOMAIN']!,
+        projectId: dotenv.env['FIREBASE_PROJECT_ID']!,
+        storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET']!,
+        messagingSenderId: dotenv.env['FIREBASE_MESSAGING_SENDER_ID']!,
+        appId: dotenv.env['FIREBASE_APP_ID']!,
+      ),
+    );
+
   }else{
     await Firebase.initializeApp();
   }
   await SharedPreferencesHelper.init();
+  Get.put(WrapperController(), permanent: true);
   runApp(const MyApp());
 }
 
@@ -42,7 +44,7 @@ class MyApp extends StatelessWidget {
       themeMode: (SharedPreferencesHelper.instance.getBool(ConstUtils.isDark)??false) ? ThemeMode.dark : ThemeMode.light,
       theme: ThemesUtil.light,
       darkTheme: ThemesUtil.dark,
-      home: WrapperView(),
+      home: SettingsPageView(),
 
     );
   }
