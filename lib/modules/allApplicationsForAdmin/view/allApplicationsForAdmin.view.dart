@@ -1,6 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:plan_it/modules/allApplicationsForAdmin/controlllers/allApplicationsForAdmin.controller.dart';
+import 'package:get/get.dart';
+
+import '../controlllers/allApplicationsForAdmin.controller.dart';
 
 class AllApplicationsForAdminView extends StatefulWidget {
   @override
@@ -8,52 +9,13 @@ class AllApplicationsForAdminView extends StatefulWidget {
 }
 
 class _AllApplicationsForAdminViewState extends State<AllApplicationsForAdminView> {
-  List<Map<String, dynamic>> applications = [];
-
-  //AllApplicationsForAdminController allApplicationsForAdminController=AllApplicationsForAdminController();
+  final AllApplicationsForAdminController controller = Get.put(AllApplicationsForAdminController());
 
   @override
   void initState() {
     super.initState();
-    fetchApplications();
+    controller.fetchApplications();
   }
-
-  // Fetch applications from Firestore and store them in a local list
-  Future<void> fetchApplications() async {
-    try {
-      final querySnapshot = await FirebaseFirestore.instance.collection('applications').where('status', isEqualTo: 'pending').get();
-      setState(() {
-        applications = querySnapshot.docs.map((doc) {
-          final data = doc.data() as Map<String, dynamic>;
-          data['id'] = doc.id; // Store the document ID
-          return data;
-        }).toList();
-      });
-    } catch (e) {
-      print('Error fetching applications: $e');
-    }
-  }
-
-  // Handle application status and remove it from the list
-  Future<void> handleApplication(String id, String status) async {
-    try {
-      // Update the status in Firestore
-      await FirebaseFirestore.instance.collection('applications').doc(id).update({
-        'status': status,  // Update the status field
-      });
-
-      // Remove the application from the local list
-      setState(() {
-        applications.removeWhere((app) => app['id'] == id);
-      });
-
-      print('Application $id marked as $status.');
-    } catch (e) {
-      print('Error updating application status: $e');
-    }
-  }
-
-
 
   void showConfirmationDialog(BuildContext context, String id, String status) {
     showDialog(
@@ -69,7 +31,7 @@ class _AllApplicationsForAdminViewState extends State<AllApplicationsForAdminVie
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              handleApplication(id, status);
+              controller.handleApplication(id, status);
             },
             child: Text('Yes'),
           ),
@@ -81,34 +43,63 @@ class _AllApplicationsForAdminViewState extends State<AllApplicationsForAdminVie
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Applications'),
-      ),
-      body: applications.isEmpty
-          ? Center(child: Text('No applications yet.'))
-          : ListView.builder(
-        itemCount: applications.length,
-        itemBuilder: (context, index) {
-          final app = applications[index];
-          return ListTile(
-            title: Text(app['message'] ?? 'No message'),
-            subtitle: Text('Status: ${app['status'] ?? 'pending'}'),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: Icon(Icons.check, color: Colors.green),
-                  onPressed: () => showConfirmationDialog(context, app['id'], 'approved'),
-                ),
-                IconButton(
-                  icon: Icon(Icons.close, color: Colors.red),
-                  onPressed: () => showConfirmationDialog(context, app['id'], 'rejected'),
-                ),
-              ],
-            ),
+      appBar: AppBar(title: Text('Applications')),
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(
+            child: CircularProgressIndicator(),
           );
-        },
-      ),
+        }
+
+        final apps = controller.applications;
+
+        if (apps.isEmpty) {
+          return const Center(child: Text('No applications yet.'));
+        }
+
+        return ListView.builder(
+          itemCount: apps.length,
+          itemBuilder: (context, index) {
+            final app = apps[index];
+            return Card(
+              elevation: 2,
+              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("From: ${app['senderName']}", style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text("To: ${app['recipientName']}"),
+                    Text("Subject: ${app['subject']}"),
+                    Text("Date: ${app['date']}"),
+                    Text("Message: ${app['message']}"),
+                    if ((app['changeFrom'] ?? '').isNotEmpty && (app['changeTo'] ?? '').isNotEmpty)
+                      Text("Shift Change: ${app['changeFrom']} ➝ ${app['changeTo']}"),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton.icon(
+                          icon: const Icon(Icons.check, color: Colors.green),
+                          label: const Text("Approve"),
+                          onPressed: () => showConfirmationDialog(context, app['id'], 'approved'),
+                        ),
+                        TextButton.icon(
+                          icon: const Icon(Icons.close, color: Colors.red),
+                          label: const Text("Reject"),
+                          onPressed: () => showConfirmationDialog(context, app['id'], 'rejected'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      }),
+
     );
   }
 }

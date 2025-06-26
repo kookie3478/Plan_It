@@ -1,0 +1,2 @@
+C:/Users/ANJALI/AndroidStudioProjects/plan_it/android/app/.cxx/RelWithDebInfo/5h626l61/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/Users/ANJALI/AndroidStudioProjects/plan_it/android/app/.cxx/RelWithDebInfo/5h626l61/arm64-v8a/CMakeFiles/rebuild_cache.dir

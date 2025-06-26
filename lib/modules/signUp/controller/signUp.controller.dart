@@ -9,48 +9,68 @@ import '../../../utils/route.utils.dart';
 import '../../login/view/login.view.dart';
 
 class SignUpController extends GetxController {
-  final _auth = Authentication();
   final TextEditingController name = TextEditingController();
   final TextEditingController email = TextEditingController();
   final TextEditingController password = TextEditingController();
-  final TextEditingController missNum = TextEditingController();
+  final TextEditingController group = TextEditingController();
   final TextEditingController role = TextEditingController();
+
+  var selectedRole = ''.obs;  // for button highlighting
+
+  bool value = true;
+
+  void getRole(String str) {
+    role.text = str;
+    selectedRole.value = str;
+    if (str.toLowerCase() == "user") {
+      value = true;
+    } else {
+      value = false;
+    }
+  }
 
   goToLogin() {
     RoutesUtil.offAll(() => LoginView());
   }
 
-
-  Future<void> signUp(String email, String password, String name,
-      String role) async {
+  Future<void> signUp(String email, String password, String name, String role, String group) async {
     try {
-      // 1. Create the user with email and password
-      final userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
+      // Step 1: Register user
+      final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // 2. Save the additional data (name and role) in Firestore
       final user = userCredential.user;
 
-      if (user != null) {
-        await FirebaseFirestore.instance.collection('userCreds')
-            .doc(user.uid)
-            .set({
-          'name': name,
-          'role': role, // 'User' or 'Admin'
-          'email': email,
-        });
-      }
+      // Step 2: Ensure user is logged in
+      if (user == null) throw Exception("User is null after signup");
+
+      final uid = user.uid;
+
+      // Step 3: Create Firestore document
+      final userData = {
+        'name': name,
+        'role': role,
+        'email': email,
+        'group':group,
+        'createdAt': FieldValue.serverTimestamp(),
+      };
+
+      await FirebaseFirestore.instance.collection('userCreds').doc(uid).set(userData);
+
+      log("User signed up and data saved for UID: $uid");
+
+    } on FirebaseAuthException catch (e) {
+      log("FirebaseAuthException: ${e.code} - ${e.message}");
+      throw Exception('Authentication failed: ${e.message}');
     } catch (e) {
-      print("Signup Error: $e");
-      // Handle error (show message to user)
+      log("General signup error: $e");
+      throw Exception('Signup failed: $e');
     }
   }
 
-  void handleSignup(BuildContext context, String email, String password,
-      String name, String role) async {
+  void handleSignup(BuildContext context, String email, String password, String name, String role, String group) async {
     if (name.isEmpty || role.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('Name and role must be provided!'),
@@ -59,16 +79,17 @@ class SignUpController extends GetxController {
     }
 
     try {
-      // Call signUp function to register user
-      await signUp(email, password, name, role);
+      await signUp(email, password, name, role, group);
+
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Signup successful!'),
+        content: Text('Signup successful! Please log in.'),
       ));
-      RoutesUtil.offAll(()=>LoginView());
-      // Redirect user to home screen or login page
+
+      RoutesUtil.offAll(() => LoginView());
+
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Signup failed: $e'),
+        content: Text(e.toString()),
       ));
     }
   }

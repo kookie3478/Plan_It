@@ -1,11 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:plan_it/modules/adminHomePage/controllers/adminHomePage.controller.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../calendar/controller/calendar.controller.dart';
 
-class AdminHomePageView extends StatelessWidget {
+class AdminHomePageView extends StatefulWidget {
   AdminHomePageView({super.key});
+
+  @override
+  State<AdminHomePageView> createState() => _AdminHomePageViewState();
+}
+
+class _AdminHomePageViewState extends State<AdminHomePageView> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  AdminHomePageController adminHomePageController = AdminHomePageController();
+  final AdminHomePageController adminHomePageController =
+  Get.put(AdminHomePageController());
+  final ShiftCalendarController shiftCalendarController= Get.put(ShiftCalendarController());
 
   @override
   Widget build(BuildContext context) {
@@ -39,10 +49,16 @@ class AdminHomePageView extends StatelessWidget {
           actions: [
             IconButton(
                 onPressed: () async {
+                  // Clear in-memory shifts
+                  Get.find<ShiftCalendarController>().clearData();
+
+                  // Clear from SharedPreferences
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.remove('assignedShifts'); // Use your actual key
                   await adminHomePageController.auth.signout();
                   adminHomePageController.goToLogin();
                 },
-                icon: Icon(
+                icon: const Icon(
                   Icons.logout_outlined,
                   size: 25,
                   color: Colors.blueGrey,
@@ -54,7 +70,7 @@ class AdminHomePageView extends StatelessWidget {
             padding: const EdgeInsets.all(8.0),
             child: ListView(
               children: [
-                DrawerHeader(
+                const DrawerHeader(
                   child: Text(
                     'More',
                     style: TextStyle(
@@ -63,55 +79,20 @@ class AdminHomePageView extends StatelessWidget {
                         color: Colors.cyan),
                   ),
                 ),
+
                 MaterialButton(
-                  onPressed: () {},
-                  minWidth: 0,
-                  padding: EdgeInsets.zero,
-                  splashColor: Colors.transparent,
-                  highlightColor: Colors.transparent,
-                  visualDensity: VisualDensity.compact,
-                  child: Row(
-                    children: [
-                      Icon(Icons.person),
-                      SizedBox(width: 10,),
-                      Text(
-                        "User Profile",
-                        style: TextStyle(fontWeight: FontWeight.w400, fontSize: 20),
-                      ),
-                    ],
-                  )
-                ),
-                MaterialButton(
-                    onPressed: () {},
+                    onPressed: ()=>adminHomePageController.goToSettings(),
                     minWidth: 0,
                     padding: EdgeInsets.zero,
                     splashColor: Colors.transparent,
                     highlightColor: Colors.transparent,
                     visualDensity: VisualDensity.compact,
-                    child: Row(
+                    child: const Row(
                       children: [
                         Icon(Icons.settings),
                         SizedBox(width: 10,),
                         Text(
                           "Settings Page",
-                          style: TextStyle(fontWeight: FontWeight.w400, fontSize: 20),
-                        ),
-                      ],
-                    )
-                ),
-                MaterialButton(
-                    onPressed: () {},
-                    minWidth: 0,
-                    padding: EdgeInsets.zero,
-                    splashColor: Colors.transparent,
-                    highlightColor: Colors.transparent,
-                    visualDensity: VisualDensity.compact,
-                    child: Row(
-                      children: [
-                        Icon(Icons.color_lens),
-                        SizedBox(width: 10,),
-                        Text(
-                          "Theme",
                           style: TextStyle(fontWeight: FontWeight.w400, fontSize: 20),
                         ),
                       ],
@@ -127,17 +108,20 @@ class AdminHomePageView extends StatelessWidget {
             children: [
               // Here you have the notification button where you need to add the notifications received by the user so that everyone gets the update for the holiday of dept
 
-              Text(
-                "Greeting",
-                style: TextStyle(fontWeight: FontWeight.w400, fontSize: 30),
-              ),
+              Obx(() => Text(
+                adminHomePageController.greeting.value,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w400, fontSize: 30),
+              )),
               const SizedBox(
                 height: 15,
               ),
-              Text(
-                "User Name",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400),
-              ),
+              Obx(() => Text(
+                adminHomePageController.userName.value,
+                style: const TextStyle(
+                    fontSize: 20, fontWeight: FontWeight.w400),
+              )),
+
               const SizedBox(
                 height: 15,
               ),
@@ -162,12 +146,13 @@ class AdminHomePageView extends StatelessWidget {
                                 color: context.theme.colorScheme.onPrimary),
                           ),
                           Text(
-                            "14/11/2024",
+                            "${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}",
                             style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w300,
                                 color: context.theme.colorScheme.onPrimary),
                           ),
+
                         ],
                       ),
                     ),
@@ -192,13 +177,18 @@ class AdminHomePageView extends StatelessWidget {
                                   fontSize: 16,
                                   color: context.theme.colorScheme.onPrimary),
                             ),
-                            Text(
-                              "Morning",
-                              style: TextStyle(
+                            Obx(() {
+                              final todayShift = shiftCalendarController.getTodayShift();
+                              return Text(
+                                todayShift,
+                                style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w300,
-                                  color: context.theme.colorScheme.onPrimary),
-                            ),
+                                  color: context.theme.colorScheme.onPrimary,
+                                ),
+                              );
+                            }),
+
                           ],
                         ),
                       ),
@@ -213,7 +203,7 @@ class AdminHomePageView extends StatelessWidget {
               // material button for opening up the shift calendar
 
               MaterialButton(
-                onPressed: () => adminHomePageController.openCalendar(),
+                onPressed: ()=>adminHomePageController.goToShiftCalendar(),
                 visualDensity: VisualDensity.compact,
                 splashColor: Colors.transparent,
                 highlightColor: Colors.transparent,
@@ -237,7 +227,7 @@ class AdminHomePageView extends StatelessWidget {
                             color: context.theme.colorScheme.onPrimary),
                       ),
                       Icon(
-                        Icons.open_in_full_rounded,
+                        Icons.calendar_month,
                         color: context.theme.colorScheme.outline,
                       ),
                     ],
@@ -275,7 +265,7 @@ class AdminHomePageView extends StatelessWidget {
                             color: context.theme.colorScheme.onPrimary),
                       ),
                       Icon(
-                        Icons.add,
+                        Icons.pending,
                         color: context.theme.colorScheme.outline,
                         size: 30,
                       ),
@@ -283,6 +273,42 @@ class AdminHomePageView extends StatelessWidget {
                   ),
                 ),
               ),
+              const SizedBox(
+                height: 20,
+              ),
+              MaterialButton(
+                onPressed: ()=>adminHomePageController.goToApprovedAppplications(),
+                minWidth: 0,
+                padding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+                highlightColor: Colors.transparent,
+                splashColor: Colors.transparent,
+                child: Container(
+                  padding: EdgeInsets.all(30),
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: context.theme.colorScheme.secondary,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Approved Applications",
+                        style: TextStyle(
+                            fontWeight: FontWeight.w400,
+                            fontSize: 20,
+                            color: context.theme.colorScheme.onPrimary),
+                      ),
+                      Icon(
+                        Icons.task_alt,
+                        color: context.theme.colorScheme.outline,
+                        size: 30,
+                      ),
+                    ],
+                  ),
+                ),
+              )
             ],
           ),
         ));

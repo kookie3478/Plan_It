@@ -1,16 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:plan_it/modules/calendar/controller/calendar.controller.dart';
 import 'package:plan_it/modules/home/controller/home.controller.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class HomeView extends StatelessWidget {
+class HomeView extends StatefulWidget {
   HomeView({super.key});
-  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
-  final HomeController homeController = HomeController();
+
+  @override
+  State<HomeView> createState() => _HomeViewState();
+}
+
+class _HomeViewState extends State<HomeView> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final HomePageController homePageController = Get.put(HomePageController());
+  final ShiftCalendarController shiftCalendarController= Get.put(ShiftCalendarController());
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        key: scaffoldKey,
+        key: _scaffoldKey,
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.menu),
@@ -23,9 +32,10 @@ class HomeView extends StatelessWidget {
               ),
             ),
             onPressed: () {
-              scaffoldKey.currentState?.openDrawer();
+              _scaffoldKey.currentState?.openDrawer();
             },
-          ), // Don't forget to add a function to open the drawer component here
+          ),
+          // Don't forget to add a function to open the drawer component here
           centerTitle: true,
           title: const Text(
             "Home",
@@ -37,15 +47,32 @@ class HomeView extends StatelessWidget {
           ),
           actions: [
             IconButton(
-                onPressed: () async {
-                  await homeController.auth.signout();
-                  homeController.goToLogin();
-                },
-                icon: Icon(
-                  Icons.logout_outlined,
-                  size: 25,
-                  color: Colors.blueGrey,
-                )),
+              onPressed: () async {
+                // Clear in-memory shifts
+                Get.find<ShiftCalendarController>().clearData();
+
+                // Clear from SharedPreferences
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.remove('assignedShifts');
+
+                // Delete home page controller to prevent user name reuse
+                if (Get.isRegistered<HomePageController>()) {
+                  Get.delete<HomePageController>();
+                }
+
+                // Sign out from Firebase
+                await homePageController.auth.signout();
+
+                // Navigate to login screen
+                homePageController.goToLogin();
+              },
+              icon: Icon(
+                Icons.logout_outlined,
+                size: 25,
+                color: Colors.blueGrey,
+              ),
+            )
+
           ],
         ),
         drawer: Drawer(
@@ -62,26 +89,9 @@ class HomeView extends StatelessWidget {
                         color: Colors.cyan),
                   ),
                 ),
+
                 MaterialButton(
-                    onPressed: () {},
-                    minWidth: 0,
-                    padding: EdgeInsets.zero,
-                    splashColor: Colors.transparent,
-                    highlightColor: Colors.transparent,
-                    visualDensity: VisualDensity.compact,
-                    child: Row(
-                      children: [
-                        Icon(Icons.person),
-                        SizedBox(width: 10,),
-                        Text(
-                          "User Profile",
-                          style: TextStyle(fontWeight: FontWeight.w400, fontSize: 20),
-                        ),
-                      ],
-                    )
-                ),
-                MaterialButton(
-                    onPressed: () {},
+                    onPressed: ()=>homePageController.goToSettings(),
                     minWidth: 0,
                     padding: EdgeInsets.zero,
                     splashColor: Colors.transparent,
@@ -98,24 +108,6 @@ class HomeView extends StatelessWidget {
                       ],
                     )
                 ),
-                MaterialButton(
-                    onPressed: () {},
-                    minWidth: 0,
-                    padding: EdgeInsets.zero,
-                    splashColor: Colors.transparent,
-                    highlightColor: Colors.transparent,
-                    visualDensity: VisualDensity.compact,
-                    child: Row(
-                      children: [
-                        Icon(Icons.color_lens),
-                        SizedBox(width: 10,),
-                        Text(
-                          "Theme",
-                          style: TextStyle(fontWeight: FontWeight.w400, fontSize: 20),
-                        ),
-                      ],
-                    )
-                ),
               ],
             ),
           ),
@@ -124,20 +116,22 @@ class HomeView extends StatelessWidget {
           padding: const EdgeInsets.all(8.0),
           child: ListView(
             children: [
-
               // Here you have the notification button where you need to add the notifications received by the user so that everyone gets the update for the holiday of dept
 
-              Text(
-                "Greeting",
-                style: TextStyle(fontWeight: FontWeight.w400, fontSize: 30),
-              ),
+              Obx(() => Text(
+                homePageController.greeting.value,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w400, fontSize: 30),
+              )),
               const SizedBox(
                 height: 15,
               ),
-              Text(
-                "User Name",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400),
-              ),
+              Obx(() => Text(
+                homePageController.userName.value,
+                style: const TextStyle(
+                    fontSize: 20, fontWeight: FontWeight.w400),
+              )),
+
               const SizedBox(
                 height: 15,
               ),
@@ -162,7 +156,7 @@ class HomeView extends StatelessWidget {
                                 color: context.theme.colorScheme.onPrimary),
                           ),
                           Text(
-                            "14/11/2024",
+                            "${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}",
                             style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w300,
@@ -171,7 +165,7 @@ class HomeView extends StatelessWidget {
                         ],
                       ),
                     ),
-                    SizedBox(
+                    const SizedBox(
                       width: 10,
                     ),
                     Flexible(
@@ -188,13 +182,22 @@ class HomeView extends StatelessWidget {
                             Text(
                               "Today's Shift",
                               style: TextStyle(
-                                  fontWeight: FontWeight.w500, fontSize: 16, color: context.theme.colorScheme.onPrimary),
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 16,
+                                  color: context.theme.colorScheme.onPrimary),
                             ),
-                            Text(
-                              "Morning",
-                              style: TextStyle(
-                                  fontSize: 13, fontWeight: FontWeight.w300, color: context.theme.colorScheme.onPrimary),
-                            ),
+                            Obx(() {
+                              final todayShift = shiftCalendarController.getTodayShift();
+                              return Text(
+                                todayShift,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w300,
+                                  color: context.theme.colorScheme.onPrimary,
+                                ),
+                              );
+                            }),
+
                           ],
                         ),
                       ),
@@ -202,12 +205,14 @@ class HomeView extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 20,),
+              const SizedBox(
+                height: 20,
+              ),
 
               // material button for opening up the shift calendar
 
               MaterialButton(
-                onPressed: ()=> homeController.openCalendar(),
+                onPressed: () => homePageController.goToCalendar(),
                 visualDensity: VisualDensity.compact,
                 splashColor: Colors.transparent,
                 highlightColor: Colors.transparent,
@@ -223,19 +228,29 @@ class HomeView extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("Open Shift Calendar", style: TextStyle(fontWeight: FontWeight.w400, fontSize: 20, color: context.theme.colorScheme.onPrimary),),
-                      Icon(Icons.open_in_full_rounded, color: context.theme.colorScheme.outline,),
-
+                      Text(
+                        "Open Shift Calendar",
+                        style: TextStyle(
+                            fontWeight: FontWeight.w400,
+                            fontSize: 20,
+                            color: context.theme.colorScheme.onPrimary),
+                      ),
+                      Icon(
+                        Icons.calendar_month,
+                        color: context.theme.colorScheme.outline,
+                      ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 20,),
+              const SizedBox(
+                height: 20,
+              ),
               // material button for making a new application for a user, this application is sent to the admin
               // Also make sure that the in the home screen of the admin this material button is replaced by new requests material button which will lead him/her to the page where the
 
               MaterialButton(
-                onPressed: ()=>homeController.openCreateApplication(),
+                onPressed: () => homePageController.showApplications(),
                 visualDensity: VisualDensity.compact,
                 splashColor: Colors.transparent,
                 highlightColor: Colors.transparent,
@@ -251,12 +266,58 @@ class HomeView extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("Create Application", style: TextStyle(fontWeight: FontWeight.w400, fontSize: 20, color: context.theme.colorScheme.onPrimary),),
-                      Icon(Icons.add, color: context.theme.colorScheme.outline,size: 30,),
+                      Text(
+                        "Create an Application",
+                        style: TextStyle(
+                            fontWeight: FontWeight.w400,
+                            fontSize: 20,
+                            color: context.theme.colorScheme.onPrimary),
+                      ),
+                      Icon(
+                        Icons.add,
+                        color: context.theme.colorScheme.outline,
+                        size: 30,
+                      ),
                     ],
                   ),
                 ),
               ),
+              SizedBox(
+                height: 20,
+              ),
+              MaterialButton(
+                onPressed: ()=>homePageController.goToApprovedApplications(),
+                minWidth: 0,
+                padding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+                highlightColor: Colors.transparent,
+                splashColor: Colors.transparent,
+                child: Container(
+                  padding: EdgeInsets.all(30),
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: context.theme.colorScheme.secondary,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Approved Applications",
+                        style: TextStyle(
+                            fontWeight: FontWeight.w400,
+                            fontSize: 20,
+                            color: context.theme.colorScheme.onPrimary),
+                      ),
+                      Icon(
+                        Icons.task_alt,
+                        color: context.theme.colorScheme.outline,
+                        size: 30,
+                      ),
+                    ],
+                  ),
+                ),
+              )
             ],
           ),
         ));

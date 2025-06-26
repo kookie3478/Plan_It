@@ -1,15 +1,20 @@
-import 'dart:ui';
+import 'package:flutter/material.dart';
 
 class Shift {
-  final String name; // Shift name (e.g., Morning, Evening)
-  final DateTime startDate; // Start date of the shift
-  final int consecutiveDays; // Number of consecutive days
-  final Color color; // Color for visual distinction
+  final String name;
+  final Color color;
 
-  Shift({
-    required this.name,
-    required this.startDate,
-    required this.consecutiveDays,
-    required this.color,
-  });
+  Shift({required this.name, required this.color});
+
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'color': color.value,
+  };
+
+  factory Shift.fromJson(Map<String, dynamic> json) {
+    return Shift(
+      name: json['name'],
+      color: Color(json['color']),
+    );
+  }
 }

@@ -3,12 +3,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/adapters.dart';
+import 'package:plan_it/modules/wrapper/view/wrapper.view.dart';
 import 'package:plan_it/utils/const.utils.dart';
 import 'package:plan_it/utils/theme.util.dart';
-
 import 'helper/sharedPreferences.helper.dart';
-import 'modules/settingsPage/view/settingsPage.view.dart';
 import 'modules/wrapper/controller/wrapper.controller.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if(kIsWeb){
@@ -26,6 +28,10 @@ Future<void> main() async {
   }else{
     await Firebase.initializeApp();
   }
+
+  await Hive.initFlutter();
+  //await Hive.openBox<Shift>('shifts');
+
   await SharedPreferencesHelper.init();
   Get.put(WrapperController(), permanent: true);
   runApp(const MyApp());
@@ -40,11 +46,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       debugShowCheckedModeBanner:false,
-      title: 'Flutter Demo',
       themeMode: (SharedPreferencesHelper.instance.getBool(ConstUtils.isDark)??false) ? ThemeMode.dark : ThemeMode.light,
       theme: ThemesUtil.light,
       darkTheme: ThemesUtil.dark,
-      home: SettingsPageView(),
+      home: WrapperView(),
 
     );
   }

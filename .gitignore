@@ -43,5 +43,5 @@ app.*.map.json
 /android/app/release
 
 .env
-C:\Users\ANJALI\AndroidStudioProjects\plan_it\android\app\google-services.json
+\android\app\google-services.json
 

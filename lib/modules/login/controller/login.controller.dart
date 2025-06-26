@@ -1,32 +1,31 @@
-import 'dart:developer';
-import 'package:flutter/cupertino.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:plan_it/modules/adminHomePage/view/adminHomePage.view.dart';
-import 'package:plan_it/modules/applications/view/applications.view.dart';
-import 'package:plan_it/modules/calendar/view/calendar.view.dart';
 import '../../../authentication.dart';
 import '../../../utils/route.utils.dart';
+import '../../adminHomePage/view/adminHomePage.view.dart';
 import '../../forgotPassword/view/forgotPassword.view.dart';
 import '../../home/view/home.view.dart';
 import '../../signUp/view/signUp.view.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+
 
 class LoginController extends GetxController{
   final _auth = Authentication();
   final TextEditingController email = TextEditingController();
   final TextEditingController password = TextEditingController();
   final TextEditingController role = TextEditingController();
-  bool value=true;
-  getRole(String str){
-    role.text=str;
-    if(role.text=="User"){
-      value=true;
-    }else{
-      value=false;
+  var selectedRole = ''.obs;  // for button highlighting
+
+  bool value = true;
+
+  void getRole(String str) {
+    role.text = str;
+    selectedRole.value = str;
+    if (str.toLowerCase() == "user") {
+      value = true;
+    } else {
+      value = false;
     }
-    //print(role.text);
   }
 
   // For logging in the users
